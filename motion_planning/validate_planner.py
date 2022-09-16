@@ -1,11 +1,11 @@
 import hyperparams
-import torch
 import pickle
-from motion_planning.example_objects import create_mp_task
-from motion_planning.utils import initialize_logging, get_cost_table, get_cost_increase
-
 from plots.plot_functions import plot_traj
 
+
+"""
+script to evaluate the optimization method and to compare density planner with baseline methods
+"""
 if __name__ == '__main__':
     ### load hyperparameters
     args = hyperparams.parse_args()
