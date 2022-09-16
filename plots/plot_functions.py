@@ -13,7 +13,7 @@ matplotlib.rcParams['text.latex.preamble'] = r'\usepackage{{amsmath}}'
 plt.rcParams['text.usetex'] = True
 plt.rcParams['text.latex.preamble'] = r'\usepackage{{amsmath}}'
 plt.rcParams['text.latex.preamble'] = r'\usepackage{{mathrsfs}}'
-plt.rc('font',**{'family':'serif','serif':['Palatino']})
+#plt.rc('font',**{'family':'serif','serif':['Palatino']})
 plt.rcParams['legend.fontsize'] = 18
 plt.rc('axes', titlesize=18)
 plt.rc('axes', labelsize=18)
@@ -537,7 +537,7 @@ def plot_traj(ego_dict, mp_results, mp_methods, args, folder=None, traj_idx=None
                 gridpos_x, gridpos_y = pos2gridpos(args, pos_x=x_trajs[:, 0, t_idx],
                                            pos_y=x_trajs[:, 1, t_idx])
                 plt.scatter(gridpos_x[:], gridpos_y[:], c=colorarray[[i], :], marker='.', s=500 * rho_traj[:, 0, t_idx])
-            if x_traj is None:
+            if x_traj is None or x_traj.shape[2] < t_idx * 10:
                 continue
             gridpos_x, gridpos_y = pos2gridpos(args, pos_x=[x_traj[0, 0, t_idx * 10]],
                                                pos_y=[x_traj[0, 1, t_idx * 10]])

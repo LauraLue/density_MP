@@ -91,7 +91,7 @@ def parse_args():
     ### MOTION PLANNING
     # general motion planning options
     parser.add_argument('--mp_name', type=str, default="test")
-    parser.add_argument('--mp_setting', type=str, default="custom")
+    parser.add_argument('--mp_setting', type=str, default="ablation")
     parser.add_argument('--mp_use_realEnv', type=bool, default=False)
     parser.add_argument('--mp_stationary', type=bool, default=False)
     parser.add_argument('--mp_num_envs', type=int, default=10)

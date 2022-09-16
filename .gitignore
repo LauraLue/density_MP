@@ -5,6 +5,6 @@ data/initial_traj
 data/matlab_env
 env/inD-dataset-v1.0
 plots/*
-scretch.py
+motion_planning/validate_planner.py
 .idea
 __pycache__

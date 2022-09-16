@@ -155,7 +155,8 @@ if __name__ == '__main__':
 
         ego_dict = {"grid": ego.env.grid,
                     "start": ego.xref0,
-                    "goal": ego.xrefN}
+                    "goal": ego.xrefN,
+                    "args": args}
         if args.mp_save_results:
             with open(path_log + "opt_results", "wb") as f:
                 pickle.dump(opt_results, f)
