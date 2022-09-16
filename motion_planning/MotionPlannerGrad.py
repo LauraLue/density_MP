@@ -385,6 +385,8 @@ class MotionPlannerGrad(MotionPlanner):
         if self.plot_final:
             self.ego.animate_traj(path_final, xref_traj, x_traj, rho_traj)
         self.xref_traj = xref_traj
+        self.x_traj = x_traj
+        self.rho_traj = rho_traj
         cost, cost_dict = self.get_cost(uref_traj, x_traj, rho_traj, evaluate=True)
         cost_dict = self.remove_cost_factor(cost_dict)
         logging.info("%s: True cost coll %.4f, goal %.4f, bounds %.4f, uref %.4f" % (self.name, cost_dict["cost_coll"],
@@ -427,6 +429,7 @@ class MotionPlannerGrad(MotionPlanner):
                                                                folder=path_final)
         rho_traj = torch.ones(1, 1, x_traj.shape[2])
         self.x_traj = x_traj
+        self.xref_traj = xref_traj
 
         if self.plot_final:
             self.ego.animate_traj(path_final, xref_traj, x_traj, rho_traj)
@@ -487,6 +490,8 @@ class MotionPlannerSearch(MotionPlanner):
             cost = self.validate_ref(up)
         else:
             self.xref_traj = None
+            self.x_traj = None
+            self.rho_traj = None
             logging.info("%s: No valid solution found" % self.name)
         return up, cost, t_plan
 
@@ -512,6 +517,8 @@ class MotionPlannerSearch(MotionPlanner):
         if self.plot_final:
             self.ego.animate_traj(path_final, xref_traj, x_traj, rho_traj)
         self.xref_traj = xref_traj
+        self.x_traj = x_traj
+        self.rho_traj = rho_traj
         cost, cost_dict = self.get_cost(uref_traj, x_traj, rho_traj, evaluate=True)
         cost_dict = self.remove_cost_factor(cost_dict)
         logging.info("%s: True cost coll %.4f, goal %.4f, bounds %.4f, uref %.4f" % (self.name, cost_dict["cost_coll"],
@@ -675,8 +682,12 @@ class MotionPlannerSampling(MotionPlannerSearch):
             cost, cost_dict = self.get_cost(uref_traj, x_traj, rho_traj)
             cost_min = self.remove_cost_factor(cost_dict)
             self.xref_traj = xref_traj
+            self.x_traj = x_traj
+            self.rho_traj = rho_traj
         else:
             self.xref_traj = None
+            self.x_traj = None
+            self.rho_traj = None
             cost_min = None
             up_ext = None
         return up_ext, cost_min

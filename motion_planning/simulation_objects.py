@@ -365,6 +365,46 @@ class EgoVehicle:
             grid_all = torch.clamp(grid_env_sc[:, :, i] + grid_traj + grid_pred_sc[:, :, 0], 0, 256)
             plot_grid(grid_all, self.args, name="iter%d" % i, cmap=cmap, show=False, save=True, folder=folder)
 
+    def animate_trajs(self, folder, xref_traj, x_traj=None, rho_traj=None):
+        """
+        plot the density and the states in the occupation map for each point in time
+
+        :param folder:      name of the folder for saving the plots
+        :param xref_traj:   reference state trajectory
+        :param x_traj:      state trajectories
+        :param rho_traj:    density trajectories
+        """
+
+        if x_traj is None:
+            x_traj = xref_traj
+        if rho_traj is None:
+            rho_traj = torch.ones(x_traj.shape[0], 1, x_traj.shape[2]) / x_traj.shape[0]  # assume equal density
+
+        # create colormap
+        greys = cm.get_cmap('Greys')
+        grey_col = greys(range(0, 256))
+        greens = cm.get_cmap('Greens')
+        green_col = greens(range(0, 256))
+        blue = np.array([[0.212395, 0.359683, 0.55171, 1.]])
+        # yellow = np.array([[0.993248, 0.906157, 0.143936, 1.      ]])
+        colorarray = np.concatenate((grey_col[::2, :], green_col[::2, :], blue))
+        cmap = ListedColormap(colorarray)
+
+        grid_env_sc = 127 * self.env.grid
+
+
+        for i in range(xref_traj.shape[2]):
+            with torch.no_grad():
+                # 3. compute marginalized density grid
+                grid_pred = pred2grid(x_traj[:, :, [i]], rho_traj[:, :, [i]], self.args, return_gridpos=False)
+
+            grid_pred_sc = 127 * torch.clamp(grid_pred/grid_pred.max(), 0, 1)
+            grid_pred_sc[grid_pred_sc != 0] += 128
+            grid_traj = traj2grid(xref_traj[:, :, :i + 1], self.args)
+            grid_traj[grid_traj != 0] = 256
+            grid_all = torch.clamp(grid_env_sc[:, :, i] + grid_traj + grid_pred_sc[:, :, 0], 0, 256)
+            plot_grid(grid_all, self.args, name="iter%d" % i, cmap=cmap, show=False, save=True, folder=folder)
+
     def set_start_grid(self):
         self.grid = pred2grid(self.xref0 + self.xe0, self.rho0, self.args)
 
