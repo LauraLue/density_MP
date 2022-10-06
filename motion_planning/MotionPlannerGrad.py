@@ -91,7 +91,7 @@ class MotionPlannerGrad(MotionPlanner):
         up_best = self.initial_traj[0][[idx], :, :]
         if self.plot:
             uref_traj, xref_traj = self.ego.system.up2ref_traj(self.ego.xref0, up_best, self.ego.args, short=True)
-            self.ego.visualize_xref(xref_traj, name="best_cost%.4f" % cost_min, save=True, show=False,
+            self.ego.visualize_xref(xref_traj, name="Lowest cost" % cost_min, save=True, show=False,
                                     folder=self.path_log_opt)
         return up_best, cost_min
 
@@ -143,11 +143,11 @@ class MotionPlannerGrad(MotionPlanner):
                     up.grad.zero_()
 
             if initializing:
-                uref_traj, xref_traj = self.get_traj_initialize(up, name="iter%d" % iter, plot=self.plot, folder=folder)
+                uref_traj, xref_traj = self.get_traj_initialize(up, name=iter, plot=self.plot, folder=folder)
                 #x_traj = xref_traj[:, :4, :]
                 cost, cost_dict = self.get_cost_initialize(uref_traj, xref_traj)
             else:
-                uref_traj, _, x_traj, rho_traj = self.get_traj(up, name="iter%d" % iter, folder=folder,
+                uref_traj, _, x_traj, rho_traj = self.get_traj(up, name=iter, folder=folder,
                                                                compute_density=True, plot=self.plot)
                 cost, cost_dict = self.get_cost(uref_traj, x_traj, rho_traj)
             costs_dict.append(cost_dict)

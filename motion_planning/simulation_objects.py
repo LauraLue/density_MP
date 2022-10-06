@@ -4,7 +4,7 @@ from motion_planning.utils import pos2gridpos, traj2grid, shift_array, \
     pred2grid, get_mesh_sample_points, sample_pdf, enlarge_grid, compute_gradient
 from density_training.utils import load_nn, get_nn_prediction
 from data_generation.utils import load_inputmap, load_outputmap
-from plots.plot_functions import plot_ref, plot_grid
+from plots.plot_functions import plot_ref, plot_grid, plot_traj
 from matplotlib import cm
 from matplotlib.colors import ListedColormap
 from systems.sytem_CAR import Car
@@ -304,7 +304,7 @@ class EgoVehicle:
         return x_traj, rho_traj
 
     def visualize_xref(self, xref_traj, uref_traj=None, show=True, save=False, include_date=True,
-                       name='Reference Trajectory', folder=None):
+                       name='Reference Trajectory', folder=None, x_traj=None):
         """
         plot the reference trajectory in the occupation map of the environment
 
@@ -320,10 +320,22 @@ class EgoVehicle:
         if uref_traj is not None:
             plot_ref(xref_traj, uref_traj, 'Reference Trajectory', self.args, self.system, t=self.t_vec,
                      include_date=True)
-        grid = traj2grid(xref_traj, self.args)
-        grid_env_max, _ = self.env.grid.max(dim=2)
-        plot_grid(torch.clamp(grid + grid_env_max, 0, 1), self.args, name=name,
-                  show=show, save=save, include_date=include_date, folder=folder)
+        # grid = traj2grid(xref_traj, self.args)
+        # grid_env_max, _ = self.env.grid.max(dim=2)
+        # plot_grid(torch.clamp(grid + grid_env_max, 0, 1), self.args, name=name,
+        #           show=show, save=save, include_date=include_date, folder=folder)
+        ego_dict = {"grid": self.env.grid,
+                    "start": self.xref0,
+                    "goal": self.xrefN,
+                    "args": self.args}
+        if x_traj is not None:
+            mp_methods = ["sys", "ref"]
+            mp_results = {"sys": {"x_traj": [x_traj]}, "ref": {"x_traj": [xref_traj]}}
+        else:
+            mp_methods = ["ref"]
+            mp_results = {"ref": {"x_traj": [xref_traj]}}
+        plot_traj(ego_dict, mp_results, mp_methods, self.args, folder=folder, traj_idx=0, animate=False,
+                  include_density=False, name=name)
 
     def animate_traj(self, folder, xref_traj, x_traj=None, rho_traj=None):
         """

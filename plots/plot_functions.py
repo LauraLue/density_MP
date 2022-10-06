@@ -443,7 +443,7 @@ def plot_motion(i, cmap, x_traj, rho_traj, xref_traj, args, grid_env_sc):
     plt.title("Predicted States at Time %.1f s" % (i / 10.))
     plt.tight_layout()
 
-def plot_traj(ego_dict, mp_results, mp_methods, args, folder=None, traj_idx=None, animate=False, include_density=False):
+def plot_traj(ego_dict, mp_results, mp_methods, args, folder=None, traj_idx=None, animate=False, include_density=False, name=None):
     """
     function for plotting the reference trajectories planned by different motion planners in the occupation grid
     """
@@ -455,12 +455,21 @@ def plot_traj(ego_dict, mp_results, mp_methods, args, folder=None, traj_idx=None
                                  convert_color(TUMBlue_light),
                                  convert_color(TUMGray_light),
                                  convert_color(TUMBlue_med)))
+    if mp_methods[0] == "sys":
+        colorarray = np.concatenate((convert_color(TUMGray),
+                                     convert_color(TUMBlue),
+                                     convert_color(TUMGreen_acc),
+                                     convert_color(TUMOrange_acc),
+                                     convert_color(TUMBlue_light),
+                                     convert_color(TUMGray_light),
+                                     convert_color(TUMBlue_med)))
     col_start = convert_color(MITRed)
     plt.rcParams['legend.fontsize'] = 22
     plt.rc('axes', titlesize=20)
     plt.rc('axes', labelsize=20)
     plt.rc('xtick', labelsize=18)
     plt.rc('ytick', labelsize=18)
+    legend = True
 
     plt.close("all")
     if args.mp_use_realEnv:
@@ -485,12 +494,13 @@ def plot_traj(ego_dict, mp_results, mp_methods, args, folder=None, traj_idx=None
             x_trajs_list.append(None)
             continue
         x_traj = np.array(mp_results[method]["x_traj"][traj_idx].detach())
-        x0 = x_traj[:, :, [0]]
+        x0 = ego_dict["start"]
         idx_old = np.linspace(0, x_traj.shape[2]-1, x_traj.shape[2])
         idx_new = np.linspace(0, x_traj.shape[2]-1, (x_traj.shape[2] -1) * 10 + 1)
-        x_traj_long = np.zeros((1, x_traj.shape[1], (x_traj.shape[2] -1) * 10 + 1))
+        x_traj_long = np.zeros((x_traj.shape[0], x_traj.shape[1], (x_traj.shape[2] -1) * 10 + 1))
         for j in range(x_traj.shape[1]):
-            x_traj_long[0, j, :] = np.interp(idx_new, idx_old, x_traj[0, j, :])
+            for traj_i in range(x_traj.shape[0]):
+                x_traj_long[traj_i, j, :] = np.interp(idx_new, idx_old, x_traj[traj_i, j, :])
         x_traj_list.append(torch.from_numpy(x_traj_long))
         if include_density:
             rho_traj_list.append(np.array(mp_results[method]["rho_traj"][traj_idx].detach()))
@@ -505,32 +515,50 @@ def plot_traj(ego_dict, mp_results, mp_methods, args, folder=None, traj_idx=None
         grid = ego_dict["grid"][:, :, [t_idx]]
         grid_all = 1 - np.repeat(grid, 4, axis=2)
         grid_all[:, :, 3] = 1
-        plt.figure(figsize=(x_wide, y_wide + 2.5), dpi=100)
+        if mp_methods[0] == "sys":
+            plt.figure(figsize=(x_wide, y_wide + 1.5), dpi=100)
+        elif args.mp_use_realEnv or name is not None:
+            plt.figure(figsize=(x_wide, y_wide + 1), dpi=100)
+        elif name is not None:
+            plt.figure(figsize=(x_wide, y_wide + 1.5), dpi=100)
+        elif not legend:
+            plt.figure(figsize=(x_wide+1, y_wide), dpi=100)
+        else:
+            plt.figure(figsize=(1.85 * x_wide, y_wide), dpi=100) #plt.figure(figsize=(x_wide, y_wide + 2.5), dpi=100)
+
         for i, x_traj in enumerate(x_traj_list):
             if mp_methods[i] == "grad" and "search" in mp_methods:
-                label = "Gradient-based Method" #"Density planner"
+                label = "Gradient-based \n Method" #"Density planner"
+            elif mp_methods[i] == "ref":
+                label = "Reference trajectory"
+            elif mp_methods[i] == "sys":
+                label = "System trajectories"
             elif mp_methods[i] == "search":
-                label = "Search-based Method"
+                label = "Search-based \n Method"
             elif mp_methods[i] == "sampl":
-                label = "Sampling-based Method"
+                label = "Sampling-based \n Method"
             elif mp_methods[i] == "grad":
                 label = "Density planner"
             elif mp_methods[i] == "oracle":
                 label = "Oracle"
             elif mp_methods[i] == "tube2MPC":
-                label = "MPC with $r_\\textrm{tube}=0.5m$"
+                if args.mp_use_realEnv == False:
+                    label = "MPC with \n $r_\\textrm{tube}=0.5m$"
+                else:
+                    label = "MPC with $r_\\textrm{tube}=0.5m$"
             elif mp_methods[i] == "tube3MPC":
-                label = "MPC with $r_\\textrm{tube}=1m$"
+                label = "MPC with \n $r_\\textrm{tube}=1m$"
             else:
                 label = mp_methods[i]
             plt.plot(0, 0, "-", color=colorarray[i, :], label=label)
             if x_traj is None:
                 continue
-            grid_traj = traj2grid(x_traj[:, :, :t_idx * 10 + 1], args)
-            idx = grid_traj != 0
-            grid_idx = grid_all[idx]
-            grid_idx[:, :] = torch.from_numpy(colorarray[[i], :]) #.unsqueeze(0)
-            grid_all[idx] = grid_idx
+            for num_traj in range(x_traj.shape[0]):
+                grid_traj = traj2grid(x_traj[[num_traj], :, :t_idx * 10 + 1], args)
+                idx = grid_traj != 0
+                grid_idx = grid_all[idx]
+                grid_idx[:, :] = torch.from_numpy(colorarray[[i], :]) #.unsqueeze(0)
+                grid_all[idx] = grid_idx
             if include_density:
                 rho_traj = rho_traj_list[i]
                 x_trajs = x_trajs_list[i]
@@ -546,16 +574,34 @@ def plot_traj(ego_dict, mp_results, mp_methods, args, folder=None, traj_idx=None
         plt.imshow(torch.transpose(grid_all, 0, 1), origin="lower")
         gridpos_x, gridpos_y = pos2gridpos(args, pos_x=[x0[0, 0, 0], ego_dict["goal"][0, 0, 0]],
                                            pos_y=[x0[0, 1, 0], ego_dict["goal"][0, 1, 0]])
-        plt.scatter(gridpos_x[0], gridpos_y[0], c=col_start, marker='o', s=80, label="Start")
-        plt.scatter(gridpos_x[1], gridpos_y[1], c=col_start, marker='x', s=100, label="Goal")
-        plt.axis('scaled')
-        if args.mp_use_realEnv == False:
-            plt.legend(bbox_to_anchor=(0.5, -0.09), loc="upper center")
-        elif args.mp_recording == 26:
-            plt.legend(loc="upper right")
+        if mp_methods[0] == "ref":
+            plt.scatter(gridpos_x[0], gridpos_y[0], c=col_start, marker='o', s=80, label="Start $\mathbf{x}_0$")
+        elif mp_methods[0] == "sys":
+            col_start2 = col_start.copy()
+            col_start2[0, 3] = 0.2
+            plt.scatter(gridpos_x[0], gridpos_y[0], c=col_start2, marker='s', s=800,
+                            label="Initial density distribution")
         else:
-            plt.legend(loc="upper left")
-        plt.title("$t_k=%.2fs$" % (t_idx / 10.), fontsize=24)
+            plt.scatter(gridpos_x[0], gridpos_y[0], c=col_start, marker='o', s=80, label="Start")
+        plt.scatter(gridpos_x[1], gridpos_y[1], c=col_start, marker='x', s=100, label="Goal $\mathbf{x}_{goal}$")
+        plt.axis('scaled')
+        if legend:
+            if args.mp_use_realEnv == False:
+                if name is not None:
+                    plt.legend(bbox_to_anchor=(0.5, -0.09), loc="upper center")
+                else:
+                    plt.legend(bbox_to_anchor=(1.4, 0.5), loc="center", labelspacing=1.1)
+            elif args.mp_recording == 26:
+                plt.legend(loc="upper right")
+            else:
+                plt.legend(loc="upper left")
+        if name is not None:
+            if isinstance(name, str):
+                plt.title(name, fontsize=24)
+            else:
+                plt.title("Iteration %d" % name, fontsize=24)
+        else:
+            plt.title("$t_k=%.2fs$" % (t_idx / 10.), fontsize=24)
         ticks_x = np.concatenate((np.arange(0, args.environment_size[1]+1, 10), np.arange(-10, args.environment_size[0]-1, -10)), 0)
         ticks_y = np.concatenate((np.arange(0, args.environment_size[3]+1, 10), np.arange(-10, args.environment_size[2]-1, -10)), 0)
         ticks_x_grid, ticks_y_grid = pos2gridpos(args, ticks_x, ticks_y)
@@ -568,7 +614,13 @@ def plot_traj(ego_dict, mp_results, mp_methods, args, folder=None, traj_idx=None
         plt.tight_layout()
         if folder is None:
             folder = args.path_plot_grid
-        filename = "GridTraj%d" % traj_idx + "_%d" % t_idx + ".jpg"
+        if name is None:
+            filename = "GridTraj%d" % traj_idx + "_%d" % t_idx + ".jpg"
+        else:
+            if isinstance(name, str):
+                filename = name
+            else:
+                filename = "iter%d" % name
         plt.savefig(folder + filename, dpi=100)
         plt.clf()
 

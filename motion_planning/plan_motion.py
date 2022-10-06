@@ -33,7 +33,7 @@ if __name__ == '__main__':
         opt_methods = ["grad"]
         # choose motion planning methods from  ["grad", "grad_biased", "MPC", "MPC_biased", "tubeMPC", "tubeMPC_biased",
         #                                       "tube2MPC", "tube2MPC_biased", "tube3MPC","tube3MPC_biased", "oracle"]
-        mp_methods = ["grad", "MPC", "tube2MPC", "oracle"]
+        mp_methods = ["grad"] #, "MPC", "tube2MPC", "oracle"]
         # mp_methods = ["grad", "grad_biased", "MPC", "MPC_biased", "tubeMPC", "tubeMPC_biased", "tube2MPC",
         #               "tube2MPC_biased", "tube3MPC", "tube3MPC_biased", "oracle"]
 
